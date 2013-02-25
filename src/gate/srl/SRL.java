@@ -36,6 +36,111 @@ import gate.util.*;
 public class SRL extends AbstractLanguageAnalyser
   implements ProcessingResource {
 	  
+	  /**
+	   * First version of this plugin
+	   */
+	  private static final long serialVersionUID = 1L;
 
+	  /** Code  */
+	  private static final String OUTPUT_LABEL = "SRL";
+		
+
+	  
+	  /** The name of the annotation set used for input */
+	  private String outputASName;  
+
+	  /** Address of SRL server */
+	  private String srlServerUrlString;
+	  
+	  /**
+	   * Initializes this resource
+	   * 
+	   * @return Resource
+	   * @throws ResourceInstantiationException
+	   */
+	  public Resource init() throws ResourceInstantiationException {
+	    
+	    // DBpedia Spotlight URL is mandatory
+	    if (srlServerUrlString == null || srlServerUrlString.length() == 0) {
+	      throw new ResourceInstantiationException("SLR server URL is missing!");
+	    }
+	    
+	    // test format of DS url
+	    try {
+	      new URL(srlServerUrlString);
+	      
+	    } catch(MalformedURLException e) {
+	      throw new ResourceInstantiationException("Wrong URL format.");
+	    }
+	    
+	    return this;
+	  }
+	  
+	  
+	  /**
+	   * Method is executed after the init() method has finished its
+	   * execution. <BR>
+	   * 
+	   * @throws ExecutionException
+	   */
+	  public void execute() {
+	    // init progress bar
+	    fireProgressChanged(0);
+
+	    // If no document provided to process throw an exception
+	    if (document == null) {
+	      fireProcessFinished();
+	      throw new GateRuntimeException("No document to process!");
+	    }
+
+	    // document in plain text
+	      String documentText = document.getContent().toString();
+
+	    // process is done, nice!
+	    fireProcessFinished();
+	  }  
+	  
+	  
+	  
+	  /** 
+	   * Getters and setters
+	   * 
+	   **/
+	  
+	  
+	  /**
+	   * Returns the name of the AnnotationSet that has been provided to
+	   * create the AnnotationSet
+	   */
+	  public String getOutputASName() {
+		  return outputASName;
+	  }
+	  
+	  /**
+	   * Sets the AnnonationSet name, that is used to create the
+	   * AnnotationSet
+	   * 
+	   * @param outputAS
+	   */
+	  public void setOutputASName(String outputASName) {
+		  this.outputASName = outputASName;
+	  }
+
+	  /**
+	   * Returns the URL of server where mate-tools are running. 
+	   * @return url of server
+	   */
+	  public String getSrlServerUrlString() {
+		  return srlServerUrlString;
+	  }
+
+	  /**
+	   * Sets the URL of server where mate-tools are running. 
+	   * @param url of server
+	   */
+	  public void setSrlServerUrlString(String srlServerUrlString) {
+		  this.srlServerUrlString = srlServerUrlString.trim();
+	  }
+	
 
 } // class SRL
