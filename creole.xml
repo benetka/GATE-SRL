@@ -1,0 +1,22 @@
+<!-- creole.xml Semantic Role Labeling -->
+<!--  jenda, 25/2/2013 -->
+<!-- $Id: creole.xml 9992 2008-10-31 16:53:29Z ian_roberts $ -->
+
+<!--
+This file just references the JAR file that contains the compiled resource.
+Configuration is contained in the @CreoleResource annotation on 
+gate.srl.SRL.
+-->
+
+<CREOLE-DIRECTORY>
+    <RESOURCE>
+      <JAR>SRL.jar</JAR>
+      <NAME>SRL (mate-tools)</NAME>
+      <CLASS>gate.srl.SRL</CLASS>
+      <COMMENT>Semantic Role Labeling</COMMENT>
+      <HELPURL>https://github.com/jendarybak/GATE-SRL</HELPURL>      
+      <PARAMETER NAME="document" RUNTIME="true" COMMENT="document to process">gate.Document</PARAMETER>
+      <PARAMETER NAME="outputASName" RUNTIME="true" OPTIONAL="true" COMMENT="Annotationset to put annotations into">java.lang.String</PARAMETER>
+      <PARAMETER NAME="srlServerUrlString" RUNTIME="false" OPTIONAL="false" COMMENT="Address of SRL server" DEFAULT="http://localhost">java.lang.String</PARAMETER>
+    </RESOURCE>  
+</CREOLE-DIRECTORY>
