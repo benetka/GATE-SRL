@@ -9,13 +9,27 @@
 
 package gate.srl;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
+import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import conll2009.parser.Argument;
+import conll2009.parser.IWord;
+import conll2009.parser.Parser;
+import conll2009.parser.Predicate;
+import conll2009.parser.Sentence;
 
 import gate.*;
 import gate.creole.*;
 import gate.creole.metadata.*;
 import gate.util.*;
+
 
 
 
@@ -95,15 +109,141 @@ public class SRL extends AbstractLanguageAnalyser
 
 	    SrlPOSTRequest request = new SrlPOSTRequest(srlServerUrlString);
 	    String response = request.query(sentence);
+	    
+	    //System.out.println("RESPONSE:\n" + response);
 	      
 	    if (response == null) {
 	    	fireProcessFinished();
 	    	throw new GateRuntimeException("No result returned from DBpedia Spotlight!");
 	    }
-	      
+	    
+	    Parser p = new Parser();
+	    Sentence sent = p.parse(response);
+	    sent.processPredArguments();
+	    
+	    // get the annotationSet name provided by the user, or otherwise use
+	    //the default method
+	    AnnotationSet outputAs = (outputASName == null || outputASName.length() == 0) 
+	    		? document.getAnnotations() : document.getAnnotations(outputASName);
+
+	    // iterate over all 'Resource' entities given by DBpedia Spotlight
+	    // and annotate current document
+	    for (Predicate pred : sent.getPredicates()) {
+		    for (Argument arg : pred.getArguments()) {
+		    	
+	            String patternString = "";
+	            // prepare regex pattern: ((word_a) (\s)* (word_b))
+	            for (Iterator<IWord> i = arg.getWords().iterator(); i.hasNext();) {
+	            	
+	            	IWord word = (IWord) i.next();
+	            	patternString += "(";
+	            	patternString += "("+regexSafe(word.getForm())+")";
+	            	if (i.hasNext()) { patternString +="(\\s)*"; }
+	            	patternString +=")";
+	            	
+				}
+
+	            // specify features
+		    	FeatureMap fm = gate.Factory.newFeatureMap();
+		    	// argument type
+	            fm.put("APRED", arg.getArgType());
+		    	// predicate surface form
+	            fm.put("PRED", arg.getPredicateString());
+
+	            
+	            Pattern pattern = Pattern.compile(patternString);
+	            Matcher matcher = pattern.matcher(sentence);
+	            while (matcher.find()) {
+	                // add feature
+		            try {
+			            
+		            	// argument surface form
+			            fm.put("string", matcher.group());
+			            
+						outputAs.add((long)matcher.start(), (long)matcher.end(), OUTPUT_LABEL, fm);
+					} catch (InvalidOffsetException e) {
+						e.printStackTrace();
+					}
+	            }	
+			}			
+		}
+	    
 	    // process is done, nice!
 	    fireProcessFinished();
 	}  
+	
+	/**
+	 * Conversion of Regular expression special characters
+	 * that may occur in the text to safe notation.
+	 * 
+	 * @param string to check for unsafe characters
+	 * @return regex safe string
+	 */
+	public static String regexSafe(String aRegexFragment){
+	    final StringBuilder result = new StringBuilder();
+
+	    final StringCharacterIterator iterator = 
+	      new StringCharacterIterator(aRegexFragment)
+	    ;
+	    char character =  iterator.current();
+	    while (character != CharacterIterator.DONE ){
+	      /*
+	       All literals need to have backslashes doubled.
+	      */
+	      if (character == '.') {
+	        result.append("\\.");
+	      }
+	      else if (character == '\\') {
+	        result.append("\\\\");
+	      }
+	      else if (character == '?') {
+	        result.append("\\?");
+	      }
+	      else if (character == '*') {
+	        result.append("\\*");
+	      }
+	      else if (character == '+') {
+	        result.append("\\+");
+	      }
+	      else if (character == '&') {
+	        result.append("\\&");
+	      }
+	      else if (character == ':') {
+	        result.append("\\:");
+	      }
+	      else if (character == '{') {
+	        result.append("\\{");
+	      }
+	      else if (character == '}') {
+	        result.append("\\}");
+	      }
+	      else if (character == '[') {
+	        result.append("\\[");
+	      }
+	      else if (character == ']') {
+	        result.append("\\]");
+	      }
+	      else if (character == '(') {
+	        result.append("\\(");
+	      }
+	      else if (character == ')') {
+	        result.append("\\)");
+	      }
+	      else if (character == '^') {
+	        result.append("\\^");
+	      }
+	      else if (character == '$') {
+	        result.append("\\$");
+	      }
+	      else {
+	        //the char is not a special one
+	        //add it to the result as is
+	        result.append(character);
+	      }
+	      character = iterator.next();
+	    }
+	    return result.toString();
+	  }	
 	  
 	  
 	  
@@ -118,7 +258,7 @@ public class SRL extends AbstractLanguageAnalyser
 	 * create the AnnotationSet
 	 */
 	public String getOutputASName() {
-		return outputASName;
+		return this.outputASName;
 	}
 	  
 	/**
@@ -136,7 +276,7 @@ public class SRL extends AbstractLanguageAnalyser
 	 * @return url of server
 	 */
 	public String getSrlServerUrlString() {
-		return srlServerUrlString;
+		return this.srlServerUrlString;
 	}
 
 	/**

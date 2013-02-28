@@ -1,9 +1,9 @@
 /*
- * DsResource.java
+ * SrlPOSTRequest.java
  *
- * Jan Rybak, 23/1/2013
+ * Jan Rybak, 23/2/2013
  *
- * Part of DBpedia Spotlight tagger, plugin for GATE.
+ * Part of SRL tagger, plugin for GATE.
  *
  */
 
@@ -21,7 +21,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 /** 
- * Requesting DBpedia Spotlight endpoint with GET method
+ * Requesting SLR server
  */
 public class SrlPOSTRequest{
 	
@@ -35,7 +35,7 @@ public class SrlPOSTRequest{
     private final String CONTENT_TYPE = "application/x-www-form-urlencoded";
     
 	/** Return method (available: raw text, html, rdf) */
-	private final String RETURN_METHOD = "RDF";    
+	private final String RETURN_METHOD = "text";    
     
     /**
      * Primarily we parse XML documents.<br /> 
@@ -53,8 +53,7 @@ public class SrlPOSTRequest{
     /** Default language */
     private final String LANGUAGE = "en-US";
     
-    /** DBpedia Spotlight endpoints URL, 
-     * for example: http://spotlight.dbpedia.org/rest/annotate/ */
+    /** SRL server, example: http://barbar.cs.lth.se:8081/parse */
     private URL srlUrl;
 
     /**
@@ -128,7 +127,7 @@ public class SrlPOSTRequest{
 	
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new GateRuntimeException("Error during communication with DBpedia Spotlight server!");
+			throw new GateRuntimeException("Error during communication with SRL server!");
 	
 		} finally {
 			if (connection != null) {
