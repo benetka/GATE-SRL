@@ -9,10 +9,8 @@
 
 package gate.srl;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Iterator;
@@ -105,67 +103,76 @@ public class SRL extends AbstractLanguageAnalyser
 	    }
 
 	    // document in plain text
-	    String sentence = document.getContent().toString();
+	    String documentString = document.getContent().toString();
 
-	    SrlPOSTRequest request = new SrlPOSTRequest(srlServerUrlString);
-	    String response = request.query(sentence);
-	    
-	    //System.out.println("RESPONSE:\n" + response);
-	      
-	    if (response == null) {
-	    	fireProcessFinished();
-	    	throw new GateRuntimeException("No result returned from DBpedia Spotlight!");
-	    }
-	    
-	    Parser p = new Parser();
-	    Sentence sent = p.parse(response);
-	    sent.processPredArguments();
-	    
-	    // get the annotationSet name provided by the user, or otherwise use
-	    //the default method
-	    AnnotationSet outputAs = (outputASName == null || outputASName.length() == 0) 
-	    		? document.getAnnotations() : document.getAnnotations(outputASName);
+		// get senteces' annotation 
+		AnnotationSet sentences = document.getAnnotations("MySentences");  
 
-	    // iterate over all 'Resource' entities given by DBpedia Spotlight
-	    // and annotate current document
-	    for (Predicate pred : sent.getPredicates()) {
-		    for (Argument arg : pred.getArguments()) {
-		    	
-	            String patternString = "";
-	            // prepare regex pattern: ((word_a) (\s)* (word_b))
-	            for (Iterator<IWord> i = arg.getWords().iterator(); i.hasNext();) {
-	            	
-	            	IWord word = (IWord) i.next();
-	            	patternString += "(";
-	            	patternString += "("+regexSafe(word.getForm())+")";
-	            	if (i.hasNext()) { patternString +="(\\s)*"; }
-	            	patternString +=")";
-	            	
-				}
+		// go through all sentences in document		 
+		for (Annotation sentence : sentences) { 
+			// sentence boundaries
+			long sentenceStart = sentence.getStartNode().getOffset();
+			long sentenceEnd = sentence.getEndNode().getOffset();
 
-	            // specify features
-		    	FeatureMap fm = gate.Factory.newFeatureMap();
-		    	// argument type
-	            fm.put("APRED", arg.getArgType());
-		    	// predicate surface form
-	            fm.put("PRED", arg.getPredicateString());
-
-	            
-	            Pattern pattern = Pattern.compile(patternString);
-	            Matcher matcher = pattern.matcher(sentence);
-	            while (matcher.find()) {
-	                // add feature
-		            try {
-			            
-		            	// argument surface form
-			            fm.put("string", matcher.group());
-			            
-						outputAs.add((long)matcher.start(), (long)matcher.end(), OUTPUT_LABEL, fm);
-					} catch (InvalidOffsetException e) {
-						e.printStackTrace();
+			// send request to SRL server
+		    SrlPOSTRequest request = new SrlPOSTRequest(srlServerUrlString);
+		    String response = request.query(documentString.substring((int)sentenceStart, (int)sentenceEnd));
+		    
+		    //System.out.println("RESPONSE from SRL server:\n" + response);
+		    if (response == null) {
+		    	fireProcessFinished();
+		    	throw new GateRuntimeException("No result returned from DBpedia Spotlight!");
+		    }
+		    
+		    Parser p = new Parser();
+		    Sentence sent = p.parse(response);
+		    sent.processPredArguments();
+		    
+		    // get the annotationSet name provided by the user, or otherwise use
+		    //the default method
+		    AnnotationSet outputAs = (outputASName == null || outputASName.length() == 0) 
+		    		? document.getAnnotations() : document.getAnnotations(outputASName);
+	
+		    // iterate over all 'Resource' entities given by DBpedia Spotlight
+		    // and annotate current document
+		    for (Predicate pred : sent.getPredicates()) {
+			    for (Argument arg : pred.getArguments()) {
+			    	
+		            String patternString = "";
+		            // prepare regex pattern: ((word_a) (\s)* (word_b))
+		            for (Iterator<IWord> i = arg.getWords().iterator(); i.hasNext();) {
+		            	
+		            	IWord word = (IWord) i.next();
+		            	patternString += "(";
+		            	patternString += "("+regexSafe(word.getForm())+")";
+		            	if (i.hasNext()) { patternString +="(\\s)*"; }
+		            	patternString +=")";
+		            	
 					}
-	            }	
-			}			
+	
+		            // specify features
+			    	FeatureMap fm = gate.Factory.newFeatureMap();
+			    	// argument type
+		            fm.put("APRED", arg.getArgType());
+			    	// predicate surface form
+		            fm.put("PRED", arg.getPredicateString());
+	
+		            
+		            Pattern pattern = Pattern.compile(patternString);
+		            Matcher matcher = pattern.matcher(documentString);
+		            while (matcher.find()) {
+		                // add feature
+			            try {
+				            
+			            	// argument surface form
+				            fm.put("string", matcher.group());
+							outputAs.add((long)matcher.start(), (long)matcher.end(), OUTPUT_LABEL, fm);
+						} catch (InvalidOffsetException e) {
+							e.printStackTrace();
+						}
+		            }	
+				}			
+			}
 		}
 	    
 	    // process is done, nice!
