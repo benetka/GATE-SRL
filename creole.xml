@@ -17,6 +17,7 @@ gate.srl.SRL.
       <HELPURL>https://github.com/jendarybak/GATE-SRL</HELPURL>      
       <PARAMETER NAME="document" RUNTIME="true" COMMENT="document to process">gate.Document</PARAMETER>
       <PARAMETER NAME="outputASName" RUNTIME="true" OPTIONAL="true" COMMENT="Annotationset to put annotations into">java.lang.String</PARAMETER>
-      <PARAMETER NAME="srlServerUrlString" RUNTIME="false" OPTIONAL="false" COMMENT="Address of SRL server" DEFAULT="http://localhost:8072">java.lang.String</PARAMETER>
+      <PARAMETER NAME="sentenceAnnotationSet" RUNTIME="true" OPTIONAL="true" COMMENT="AnnotationSet used for sentences (from previous sentence segmentation)">java.lang.String</PARAMETER>
+      <PARAMETER NAME="srlServerUrlString" RUNTIME="false" OPTIONAL="false" COMMENT="Address of SRL server" DEFAULT="http://localhost:8072/parse">java.lang.String</PARAMETER>
     </RESOURCE>  
 </CREOLE-DIRECTORY>

@@ -55,10 +55,16 @@ public class SRL extends AbstractLanguageAnalyser
 
 	/** Code  */
 	private static final String OUTPUT_LABEL = "SRL";
+
+	/** Sentence annotation name */
+  private static final String SENTENCE_ANNOTATION_TYPE = "Sentence";
 		  
 	  
 	/** The name of the annotation set used for input */
-	private String outputASName;  
+	private String outputASName;
+	
+	/** The name of the annotation set used for sentences */
+	private String sentenceAnnotationSet;	
 
 	/** Address of SRL server */
 	private String srlServerUrlString;
@@ -106,7 +112,8 @@ public class SRL extends AbstractLanguageAnalyser
 	    String documentString = document.getContent().toString();
 
 		// get senteces' annotation 
-		AnnotationSet sentences = document.getAnnotations("MySentences");  
+		AnnotationSet sentences = 
+		    document.getAnnotations(sentenceAnnotationSet).get(SENTENCE_ANNOTATION_TYPE);  
 
 		// go through all sentences in document		 
 		for (Annotation sentence : sentences) { 
@@ -153,9 +160,11 @@ public class SRL extends AbstractLanguageAnalyser
 		            // specify features
 			    	FeatureMap fm = gate.Factory.newFeatureMap();
 			    	// argument type
-		            fm.put("APRED", arg.getArgType());
+		            fm.put("apredType", arg.getArgType());
 			    	// predicate surface form
-		            fm.put("PRED", arg.getPredicateString());
+		            fm.put("predString", arg.getPredicateString());
+			    	// predicate lemma
+		            fm.put("predLemma", arg.getPredicateLemma());		            
 	
 		            
 		            Pattern pattern = Pattern.compile(patternString);
@@ -276,6 +285,24 @@ public class SRL extends AbstractLanguageAnalyser
 	 */
 	public void setOutputASName(String outputASName) {
 		this.outputASName = outputASName;
+	}
+
+	/**
+	 * Gets the AnnonationSet name for sentences
+	 * 
+	 * @return name of the annotation set sentences
+	 */
+	public String getSentenceAnnotationSet() {
+		return sentenceAnnotationSet;
+	}
+
+	/**
+	 * Sets the AnnonationSet name for sentences
+	 * 
+	 * @param name of the annotation set sentences
+	 */
+	public void setSentenceAnnotationSet(String sentenceAnnotationSet) {
+		this.sentenceAnnotationSet = sentenceAnnotationSet;
 	}
 
 	/**
