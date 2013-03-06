@@ -61,6 +61,12 @@ public class Sentence {
 			for (Iterator<IWord> j = words.iterator(); j.hasNext();) {
 				Word2009 word = (Word2009) j.next();
 				
+				// if there is more predicates than word.ARG_COLUMNS
+				// we can't process arguments (there is only space for 16 args)
+				if (i == word.maxNumberOfArgs()-1) {
+					continue;
+				}
+				
 				// if argument of a word is not empty
 				if (!word.getArgsArray()[i].equals("_")) {
 					// create argument object
